@@ -18,12 +18,22 @@ type TextGenerator = (
   prompt: string,
   options?: Record<string, unknown>,
 ) => Promise<GenerationResult | GenerationResult[]>;
+type TranslationResult = { translation_text: string };
+type Translator = (
+  text: string,
+  options?: Record<string, unknown>,
+) => Promise<TranslationResult | TranslationResult[]>;
 
-const descriptionTemplate = (
-  selections: string[],
-) => `あなたは恋愛アドバイザーです。以下の人生観タグを持つユーザーの恋愛タイプを200文字以内の日本語で説明してください。\n\nタグ: ${
-  selections.length > 0 ? selections.join('、') : '選択なし'
-}\n\n回答では、ユーザーの価値観を簡潔にまとめ、恋愛傾向と相性の良いパートナー像を提案してください。文頭に「フィードバック:」と付けてください。`;
+const englishTemplate = (originalTags: string[], translatedTags: string[]) => {
+  const combinedTags = originalTags.map((tag, index) => {
+    const translated = translatedTags[index]?.trim();
+    return translated && translated !== tag ? `${translated} (${tag})` : tag;
+  });
+
+  return `You are a thoughtful relationship coach. Based on the following life-value tags selected by the user, describe their romantic tendencies and suggest an ideal partner match in under 150 words. Start the response with "Feedback:" and write in warm, encouraging English.\n\nTags: ${
+    combinedTags.length > 0 ? combinedTags.join(', ') : 'None selected'
+  }\n\nProvide a concise summary that highlights the user's values and how those values influence their love life.`;
+};
 
 const TagAdvisor = ({ tags }: TagAdvisorProps) => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -31,6 +41,45 @@ const TagAdvisor = ({ tags }: TagAdvisorProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const pipelineRef = useRef<TextGenerator | null>(null);
+  const translationRefs = useRef<{
+    jaToEn: Translator | null;
+    enToJa: Translator | null;
+  }>({ jaToEn: null, enToJa: null });
+
+  const getTranslationPipeline = useCallback(async (direction: 'ja-en' | 'en-ja') => {
+    if (direction === 'ja-en') {
+      if (!translationRefs.current.jaToEn) {
+        translationRefs.current.jaToEn = (await pipeline(
+          'translation',
+          'Xenova/opus-mt-ja-en',
+        )) as unknown as Translator;
+      }
+      return translationRefs.current.jaToEn;
+    }
+
+    if (!translationRefs.current.enToJa) {
+      translationRefs.current.enToJa = (await pipeline(
+        'translation',
+        'Xenova/opus-mt-en-ja',
+      )) as unknown as Translator;
+    }
+    return translationRefs.current.enToJa;
+  }, []);
+
+  const translateText = useCallback(
+    async (text: string, direction: 'ja-en' | 'en-ja') => {
+      try {
+        const translator = await getTranslationPipeline(direction);
+        const result = await translator(text);
+        const translation = Array.isArray(result) ? result[0]?.translation_text : result.translation_text;
+        return translation?.trim() ?? text;
+      } catch (translationError) {
+        console.error(translationError);
+        return text;
+      }
+    },
+    [getTranslationPipeline],
+  );
 
   const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) =>
@@ -57,16 +106,24 @@ const TagAdvisor = ({ tags }: TagAdvisorProps) => {
         )) as TextGenerator;
       }
 
-      const prompt = descriptionTemplate(selectedTags);
-      const result = await pipelineRef.current(prompt, {
+      const translatedTags = await Promise.all(
+        selectedTags.map((tag) => translateText(tag, 'ja-en')),
+      );
+      const promptEn = englishTemplate(selectedTags, translatedTags);
+      const result = await pipelineRef.current(promptEn, {
         max_new_tokens: 120,
         temperature: 0.7,
         top_p: 0.9,
       });
 
       const generated = Array.isArray(result) ? result[0].generated_text : result.generated_text;
-      const cleaned = generated.replace(prompt, '').trim();
-      const normalized = cleaned.startsWith('フィードバック:') ? cleaned : `フィードバック: ${cleaned}`;
+      const cleanedEnglish = generated.replace(promptEn, '').trim();
+      const withoutPrefix = cleanedEnglish.replace(/^Feedback:\s*/i, '').trim();
+      const englishBody = withoutPrefix || 'Unable to generate feedback. Please try again later.';
+      const translatedFeedback = await translateText(englishBody, 'en-ja');
+      const normalized = translatedFeedback.startsWith('フィードバック:')
+        ? translatedFeedback
+        : `フィードバック: ${translatedFeedback}`;
       setFeedback(normalized.trim());
     } catch (generationError) {
       console.error(generationError);
@@ -74,7 +131,7 @@ const TagAdvisor = ({ tags }: TagAdvisorProps) => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedTags]);
+  }, [selectedTags, translateText]);
 
   const resetSelections = useCallback(() => {
     setSelectedTags([]);
