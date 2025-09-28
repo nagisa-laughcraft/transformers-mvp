@@ -1,46 +1,43 @@
 # Love Lens
 
-Next.js と transformers.js を使って恋愛タイプを言語化する MVP アプリケーションです。ユーザーは人生観に近いタグを選択し、AI から自然言語でフィードバックを受け取れます。
+Love Lens is an MVP web experience built with Next.js and transformers.js that summarizes a user's relationship style. Visitors choose life-priority tags and receive warm, English-language feedback generated entirely in the browser.
 
-## セットアップ
+## Getting started
 
 ```bash
 npm install
 ```
 
-## 開発サーバーの起動
+## Run the development server
 
 ```bash
 npm run dev
 ```
 
-ブラウザで `http://localhost:3000` を開くとアプリケーションを確認できます。初回のフィードバック生成時にはモデル読み込みのために時間がかかる場合があります。
+Then open `http://localhost:3000` in your browser. The first generation can take a few seconds while the model downloads into the session.
 
-## 主な技術スタック
+## Tech stack
 
 - Next.js 14 (App Router)
-- React 18 / TypeScript
+- React 18 with TypeScript
 - Tailwind CSS
-- [@xenova/transformers](https://github.com/xenova/transformers.js) を用いたオンデバイス推論
+- [@xenova/transformers](https://github.com/xenova/transformers.js) for on-device GPT-2 inference
 
-## フィードバック生成の流れ
+## Feedback flow
 
-1. ユーザーが日本語の価値観タグを選択
-2. `@xenova/transformers` の翻訳モデルでタグとプロンプトを英語に変換
-3. 英語プロンプトを GPT-2 で推論してフィードバック本文を生成
-4. 生成結果を再び翻訳モデルで日本語に戻し、文頭に「フィードバック:」を付与して表示
+1. The user selects English life-value tags on the page.
+2. The selected tags feed directly into a GPT-2 prompt rendered with `@xenova/transformers`.
+3. The generated text is cleaned to ensure it begins with `Feedback:` and then displayed to the user.
 
-日本語を直接生成するより安定するため、この二段階翻訳パイプラインを採用しています。
-
-## プロジェクト構成
+## Project structure
 
 ```
 app/
- ├─ components/TagAdvisor.tsx  # タグ選択とフィードバック生成の UI
- ├─ layout.tsx                 # ルートレイアウト
- └─ page.tsx                   # トップページ
+ ├─ components/TagAdvisor.tsx  # Tag selection UI and feedback generation logic
+ ├─ layout.tsx                 # Root layout and metadata
+ └─ page.tsx                   # Landing page
 ```
 
-## ライセンス
+## License
 
-このリポジトリは教育目的の MVP として提供されています。
+This repository is provided for educational MVP purposes.

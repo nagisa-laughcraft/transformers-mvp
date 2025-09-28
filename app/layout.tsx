@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Love Lens',
-  description: '恋愛タイプ診断のMVPアプリケーション',
+  description: 'An MVP web app that reflects your relationship style using transformers.js',
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
+    <html lang="en">
       <body className="antialiased">
         {children}
       </body>

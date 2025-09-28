@@ -1,21 +1,22 @@
 import TagAdvisor from './components/TagAdvisor';
 
 const TAG_OPTIONS = [
-  '仕事優先',
-  '貯金したい',
-  '恋人との時間優先',
-  'ペットを飼いたい',
-  '一軒家に住みたい',
-  '子供が欲しい',
-  '海外に住みたい',
-  '趣味を共有したい',
-  'キャリアアップ志向',
-  '家族を大切にしたい',
-  '旅行が好き',
-  '都会で暮らしたい',
-  '地方でスローライフ',
-  '柔軟な働き方をしたい',
-  '健康志向',
+  'Career-first mindset',
+  'Values financial stability',
+  'Prioritizes quality time with partner',
+  'Wants to raise pets',
+  'Dreams of owning a home',
+  'Wants children',
+  'Open to living abroad',
+  'Enjoys sharing hobbies',
+  'Ambitious about career growth',
+  'Family-oriented',
+  'Loves to travel',
+  'Prefers city living',
+  'Prefers a slower lifestyle',
+  'Seeks flexible work',
+  'Health-conscious',
+  'Values personal independence',
 ];
 
 export default function HomePage() {
@@ -26,7 +27,7 @@ export default function HomePage() {
           Love Lens
         </h1>
         <p className="mt-4 max-w-2xl text-base text-slate-600">
-          人生観に近いタグを選択すると、AIが恋愛タイプを言語化してフィードバックします。
+          Pick the life perspective tags that resonate with you and let the AI summarize your relationship style in natural language.
         </p>
       </header>
 
